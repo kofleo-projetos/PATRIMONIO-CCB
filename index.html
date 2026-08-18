@@ -3374,7 +3374,9 @@ function bcLive(v) {
   const sug=document.getElementById('live-sug');
   if(!v||v.length<2){sug.style.display='none';return;}
   const _churchFilter = invChurch || (currentUser && !currentUser.master ? currentUser.church : '');
-  const pool=_churchFilter?db.bens.filter(b=>b.localidade===_churchFilter):db.bens;
+  let pool=_churchFilter?db.bens.filter(b=>b.localidade===_churchFilter):db.bens;
+  const ctxDep = document.getElementById('dep-ctx-sel')?.value || '';
+  if(ctxDep) pool = pool.filter(b=>normDep(b.dependencia||b.invDep)===normDep(ctxDep));
   const allHits=pool.filter(b=>b.codigo.includes(v)||b.barcode.includes(v)||(b.nome&&b.nome.toLowerCase().includes(v.toLowerCase())));
   const hits=allHits; // mostra todos os resultados (lista tem rolagem própria)
   if(!hits.length){sug.style.display='none';return;}
@@ -3401,6 +3403,13 @@ function doScan() {
   const pool=_churchFilter?db.bens.filter(b=>b.localidade===_churchFilter):db.bens;
   const bem=pool.find(b=>b.barcode===v||b.codigo===v);
   if(!bem){show('s-empty',false);show('s-notfound',true);show('s-found',false);return;}
+  const ctxDep = document.getElementById('dep-ctx-sel')?.value || '';
+  if(ctxDep) {
+    const bemDep = bem.invDep || bem.dependencia || '';
+    if(bemDep && normDep(bemDep)!==normDep(ctxDep)) {
+      toast(`Atenção: este item pertence a "${bemDep}", não a "${ctxDep}".`, 'err');
+    }
+  }
   scanned=bem;
   const igNomeScanned=db.igrejas.find(x=>x.codigo===bem.localidade)?.nome||bem.localidade||'';
   document.getElementById('r-nome').textContent=bem.nome;
